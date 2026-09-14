@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Max Silverman — quantitative methods for financial markets</title>
+<meta name="description" content="Undergraduate research in stochastic control, drawdown-constrained risk management, and market microstructure.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;450;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#FBFBF9;
+  --ink:#16191D;
+  --ink-2:#5A6068;
+  --rule:#D8D6D0;
+  --deep:#2E4B63;        /* underwater */
+  --deep-wash:rgba(46,75,99,.16);
+  --barrier:#9E3B32;     /* the limit */
+  --frozen:#8A8681;      /* halted state */
+  --live:#2F6B4F;
+  --measure:66ch;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:16px; line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 28px}
+
+/* ---------- masthead ---------- */
+.masthead{padding:34px 0 0}
+.masthead h1{
+  font-family:"IBM Plex Sans",sans-serif;
+  font-size:15px;font-weight:600;letter-spacing:.01em;margin:0;
+}
+.masthead p{margin:2px 0 0;font-size:14px;color:var(--ink-2)}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 0}
+.hero h2{
+  font-family:"Newsreader",Georgia,serif;
+  font-weight:400;font-size:clamp(30px,5.2vw,52px);
+  line-height:1.08;letter-spacing:-.015em;
+  margin:0;max-width:19ch;
+}
+.hero .lede{
+  margin:20px 0 0;max-width:var(--measure);
+  font-size:17px;color:var(--ink-2);
+}
+.hero .lede b{color:var(--ink);font-weight:450}
+
+/* ---------- figure ---------- */
+.figure{margin:40px 0 0}
+.chartbox{
+  border-top:1px solid var(--ink);
+  border-bottom:1px solid var(--rule);
+  padding:18px 0 10px;
+}
+canvas{width:100%;display:block}
+#equity{height:280px}
+#mult{height:96px}
+.axis{
+  display:flex;justify-content:space-between;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--ink-2);
+  padding-top:6px;
+}
+.chartlabel{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--ink-2);
+  padding:14px 0 4px;
+}
+
+/* ---------- controls ---------- */
+.controls{
+  display:grid;grid-template-columns:1fr 1fr;gap:26px 40px;
+  margin:26px 0 0;
+}
+.ctl label{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:14px;margin-bottom:8px;
+}
+.ctl .val{font-family:"IBM Plex Mono",monospace;font-size:15px}
+.ctl .hint{font-size:12.5px;color:var(--ink-2);margin-top:7px;min-height:2.6em}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;
+  background:transparent;cursor:pointer;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:2px;background:var(--ink);
+}
+input[type=range]::-moz-range-track{height:2px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--ink);margin-top:-7px;
+}
+input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--ink);
+}
+input[type=range]:focus-visible{outline:2px solid var(--deep);outline-offset:4px}
+
+/* ---------- readout ---------- */
+.readout{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:0;margin:34px 0 0;border-top:1px solid var(--rule);
+}
+.stat{padding:14px 16px 14px 0}
+.stat .k{font-size:12.5px;color:var(--ink-2)}
+.stat .v{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:20px;margin-top:3px;letter-spacing:-.02em;
+}
+.verdict{
+  margin:22px 0 0;padding:14px 16px;
+  border-left:3px solid var(--live);
+  background:rgba(47,107,79,.05);
+  font-size:15px;max-width:var(--measure);
+}
+.verdict.dead{
+  border-left-color:var(--frozen);
+  background:rgba(138,134,129,.09);
+}
+.verdict b{font-weight:600}
+
+/* ---------- prose ---------- */
+.note{margin:46px 0 0;max-width:var(--measure);font-size:15.5px;color:var(--ink-2)}
+.note p{margin:0 0 14px}
+.note strong{color:var(--ink);font-weight:450}
+
+section.block{padding:76px 0 0}
+section.block > h3{
+  font-family:"Newsreader",Georgia,serif;
+  font-weight:400;font-size:26px;margin:0 0 22px;
+  padding-bottom:12px;border-bottom:1px solid var(--ink);
+}
+.entry{padding:20px 0;border-bottom:1px solid var(--rule)}
+.entry h4{
+  margin:0;font-size:16.5px;font-weight:600;
+  font-family:"IBM Plex Sans",sans-serif;
+}
+.entry .meta{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;color:var(--ink-2);margin-top:4px;
+}
+.entry p{margin:9px 0 0;font-size:15px;color:var(--ink-2);max-width:var(--measure)}
+.entry .links{margin-top:10px;font-size:14px}
+a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+a:hover{border-bottom-color:var(--ink)}
+.entry .links a{margin-right:16px}
+
+footer{padding:70px 0 60px;margin-top:60px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink-2)}
+footer a{color:var(--ink-2)}
+
+@media (max-width:680px){
+  .controls{grid-template-columns:1fr;gap:22px}
+  .readout{grid-template-columns:1fr 1fr;gap:0 16px}
+  .hero h2{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <h1>Max Silverman</h1>
+    <p>Chemistry, Physics &amp; Mathematics, Georgia College &amp; State University</p>
+  </header>
+
+  <div class="hero">
+    <h2>A risk control that can switch itself off forever</h2>
+    <p class="lede">
+      Drawdown controllers shrink a position as losses accumulate, reaching zero
+      exposure at a chosen limit. But zero exposure means zero returns, which
+      means wealth stops moving, which means the drawdown never recovers. The
+      controller has no way back. Below is a real momentum strategy on the S&amp;P
+      500 from 2004 to 2026, run through that controller.
+      <b>Move the exponent down and watch what the 2020 crash does.</b>
+    </p>
+  </div>
+
+  <div class="figure">
+    <div class="chartlabel">Wealth, with drawdown from the running peak shaded</div>
+    <div class="chartbox">
+      <canvas id="equity" aria-label="Equity curve with drawdown shading"></canvas>
+      <div class="axis" id="axis"></div>
+    </div>
+
+    <div class="chartlabel">Position multiplier</div>
+    <div class="chartbox">
+      <canvas id="mult" aria-label="Position size multiplier over time"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="kappa">
+          <span>Sizing exponent</span>
+          <span class="val" id="kappaV">1.20</span>
+        </label>
+        <input type="range" id="kappa" min="0.4" max="3" step="0.05" value="1.2">
+        <div class="hint" id="kappaHint"></div>
+      </div>
+      <div class="ctl">
+        <label for="barrier">
+          <span>Drawdown limit</span>
+          <span class="val" id="barrierV">15.0%</span>
+        </label>
+        <input type="range" id="barrier" min="0.05" max="0.35" step="0.005" value="0.15">
+        <div class="hint" id="barrierHint"></div>
+      </div>
+    </div>
+
+    <div class="readout">
+      <div class="stat"><div class="k">Final wealth</div><div class="v" id="rFinal">—</div></div>
+      <div class="stat"><div class="k">Worst drawdown</div><div class="v" id="rDD">—</div></div>
+      <div class="stat"><div class="k">Average exposure</div><div class="v" id="rU">—</div></div>
+      <div class="stat"><div class="k">Days frozen</div><div class="v" id="rFrozen">—</div></div>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <div class="note">
+    <p>
+      The controller multiplies position size by
+      <strong>((C&nbsp;&minus;&nbsp;D)&nbsp;/&nbsp;C)<sup>κ</sup></strong>, where
+      D is the drawdown from the running peak and C is the limit. At κ&nbsp;=&nbsp;1
+      this is the cushion-proportional rule that Grossman and Zhou derived in 1993
+      as optimal under geometric Brownian motion. Lower exponents derisk earlier;
+      higher ones hold size longer and cut harder near the limit.
+    </p>
+    <p>
+      The failure is structural rather than a matter of tuning. Once the multiplier
+      reaches exactly zero the portfolio is frozen, so drawdown is frozen, so the
+      multiplier stays at zero regardless of what the market does afterwards. A
+      re-entry rule of the form &ldquo;resume once drawdown falls below half the
+      limit&rdquo; cannot help, because the quantity it waits on can no longer
+      change. The fix is a floor: never let exposure reach zero.
+    </p>
+    <p>
+      Everything above runs in your browser on real daily returns. The strategy is
+      deliberately ordinary — twelve-month momentum, long or flat — so that what
+      you see is the behaviour of the risk layer and not of a clever signal.
+    </p>
+  </div>
+
+  <section class="block">
+    <h3>Work</h3>
+
+    <div class="entry">
+      <h4>Power-law drawdown-modulated position sizing</h4>
+      <div class="meta">Working paper &middot; posted to SSRN</div>
+      <p>
+        Treats the sizing exponent as the object of study rather than a fixed
+        choice. Finds that the growth-optimal exponent is usually just the
+        smallest one that avoids terminating the strategy, that the survival
+        boundary depends only on volatility relative to the limit and not on the
+        limit itself, and that under heavy-tailed returns no exponent satisfies
+        the constraint at all.
+      </p>
+      <div class="links">
+        <a href="https://ssrn.com/abstract=7412798" id="lnkPaper1">Paper (SSRN)</a>
+        <a href="https://github.com/maxsilverman9/barrier-sizing" id="lnkRepo1">Code and replication</a>
+      </div>
+    </div>
+
+    <div class="entry">
+      <h4>Trade classification error in tick-level futures data</h4>
+      <div class="meta">Working paper &middot; posted to SSRN</div>
+      <p>
+        Standard algorithms infer whether a trade was buyer or seller initiated,
+        and are usually judged on average accuracy. Testing against exchange
+        aggressor flags on 14.3 million CME E-mini S&amp;P 500 futures trades
+        finds the opposite of the expected failure mode: quote-based methods are
+        essentially exact, the classical five-second quote lag is a pure
+        timestamp artifact that makes things worse, and the tick rule fails most
+        in calm markets, not volatile ones &mdash; with a measurable, mechanistic
+        effect on order flow imbalance downstream.
+      </p>
+      <div class="links">
+        <a href="https://ssrn.com/abstract=7435320" id="lnkPaper2">Paper (SSRN)</a>
+        <a href="https://github.com/maxsilverman9/orderflow-classification" id="lnkRepo2">Code and replication</a>
+      </div>
+    </div>
+
+    <div class="entry">
+      <h4>Battle state inference under partial observability</h4>
+      <div class="meta">In progress</div>
+      <p>
+        Protocol parsing and state reconstruction for a competitive game where
+        each side observes only part of the opponent&rsquo;s configuration.
+        Currently an observation layer; the inference layer is unbuilt.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <a href="https://github.com/maxsilverman9" id="lnkGH">GitHub</a> &nbsp;&nbsp;
+    <a href="mailto:maxrsilverman9@gmail.com" id="lnkMail">Email</a>
+  </footer>
+
+</div>
+
+<script src="spy_momentum.js"></script>
+<script>
+(function(){
+  const D = window.SPY_MOM;
+  const R = D.r.map(v => v / 1e5);
+  const N = R.length;
+
+  const eq = document.getElementById('equity');
+  const mu = document.getElementById('mult');
+  const eqx = eq.getContext('2d');
+  const mux = mu.getContext('2d');
+
+  const css = getComputedStyle(document.documentElement);
+  const C_INK    = css.getPropertyValue('--ink').trim();
+  const C_DEEP   = css.getPropertyValue('--deep').trim();
+  const C_WASH   = css.getPropertyValue('--deep-wash').trim();
+  const C_BAR    = css.getPropertyValue('--barrier').trim();
+  const C_FROZ   = css.getPropertyValue('--frozen').trim();
+  const C_RULE   = css.getPropertyValue('--rule').trim();
+
+  function fit(cv){
+    const dpr = window.devicePixelRatio || 1;
+    const r = cv.getBoundingClientRect();
+    cv.width = Math.round(r.width * dpr);
+    cv.height = Math.round(r.height * dpr);
+    const cx = cv.getContext('2d');
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    return {w:r.width, h:r.height};
+  }
+
+  // run the controller over the return series
+  function run(kappa, C){
+    const W = new Float64Array(N), U = new Float64Array(N), DD = new Float64Array(N);
+    let w = 1, peak = 1, maxdd = 0, usum = 0, frozen = 0, haltAt = -1;
+    for(let t=0;t<N;t++){
+      const d = peak > 0 ? Math.max(0,(peak-w)/peak) : 0;
+      let u;
+      if(d >= C){ u = 0; if(haltAt<0) haltAt=t; }
+      else u = Math.pow((C-d)/C, kappa);
+      U[t]=u; DD[t]=d; W[t]=w;
+      if(u<=0) frozen++;
+      usum += u;
+      w = w * (1 + u * R[t]);
+      if(w>peak) peak=w;
+      if(d>maxdd) maxdd=d;
+    }
+    return {W,U,DD,final:w,maxdd,meanU:usum/N,frozen,haltAt};
+  }
+
+  function draw(res, C){
+    // ---- equity panel ----
+    const {w:EW,h:EH} = fit(eq);
+    eqx.clearRect(0,0,EW,EH);
+    const pad = 4;
+    let lo=Infinity, hi=-Infinity;
+    for(let i=0;i<N;i++){ const v=Math.log(res.W[i]); if(v<lo)lo=v; if(v>hi)hi=v; }
+    const span = (hi-lo)||1;
+    const Y = v => pad + (1-(Math.log(v)-lo)/span) * (EH-2*pad);
+    const X = i => (i/(N-1)) * EW;
+
+    // running peak, for the underwater fill
+    const peaks = new Float64Array(N);
+    let p=0; for(let i=0;i<N;i++){ if(res.W[i]>p)p=res.W[i]; peaks[i]=p; }
+
+    // underwater region: between peak and wealth
+    eqx.beginPath();
+    eqx.moveTo(X(0), Y(peaks[0]));
+    for(let i=1;i<N;i++) eqx.lineTo(X(i), Y(peaks[i]));
+    for(let i=N-1;i>=0;i--) eqx.lineTo(X(i), Y(res.W[i]));
+    eqx.closePath();
+    eqx.fillStyle = C_WASH;
+    eqx.fill();
+
+    // peak line
+    eqx.beginPath();
+    for(let i=0;i<N;i++){ const x=X(i),y=Y(peaks[i]); i?eqx.lineTo(x,y):eqx.moveTo(x,y); }
+    eqx.strokeStyle = C_RULE; eqx.lineWidth = 1; eqx.stroke();
+
+    // wealth line — recoloured after the halt
+    eqx.beginPath();
+    for(let i=0;i<N;i++){ const x=X(i),y=Y(res.W[i]); i?eqx.lineTo(x,y):eqx.moveTo(x,y); }
+    eqx.strokeStyle = C_DEEP; eqx.lineWidth = 1.6; eqx.stroke();
+
+    if(res.haltAt >= 0){
+      eqx.beginPath();
+      for(let i=res.haltAt;i<N;i++){ const x=X(i),y=Y(res.W[i]);
+        i===res.haltAt?eqx.moveTo(x,y):eqx.lineTo(x,y); }
+      eqx.strokeStyle = C_FROZ; eqx.lineWidth = 2.4; eqx.stroke();
+
+      eqx.beginPath();
+      eqx.moveTo(X(res.haltAt), 0); eqx.lineTo(X(res.haltAt), EH);
+      eqx.strokeStyle = C_BAR; eqx.lineWidth = 1; eqx.setLineDash([3,3]);
+      eqx.stroke(); eqx.setLineDash([]);
+    }
+
+    // ---- multiplier panel ----
+    const {w:MW,h:MH} = fit(mu);
+    mux.clearRect(0,0,MW,MH);
+    const MY = u => 6 + (1-u)*(MH-12);
+    const MX = i => (i/(N-1))*MW;
+
+    mux.beginPath(); mux.moveTo(0,MY(1)); mux.lineTo(MW,MY(1));
+    mux.strokeStyle = C_RULE; mux.lineWidth=1; mux.stroke();
+
+    mux.beginPath();
+    for(let i=0;i<N;i++){ const x=MX(i),y=MY(res.U[i]); i?mux.lineTo(x,y):mux.moveTo(x,y); }
+    mux.lineTo(MW, MY(0)); mux.lineTo(0, MY(0)); mux.closePath();
+    mux.fillStyle = C_WASH; mux.fill();
+
+    mux.beginPath();
+    for(let i=0;i<N;i++){ const x=MX(i),y=MY(res.U[i]); i?mux.lineTo(x,y):mux.moveTo(x,y); }
+    mux.strokeStyle = res.haltAt>=0 ? C_FROZ : C_DEEP;
+    mux.lineWidth=1.4; mux.stroke();
+  }
+
+  function axis(){
+    const el = document.getElementById('axis');
+    el.innerHTML = '';
+    const yrs = D.yearTicks.filter((_,i)=> i%3===0);
+    yrs.forEach(([i,y]) => {
+      const s = document.createElement('span');
+      s.textContent = y; el.appendChild(s);
+    });
+  }
+
+  const $ = id => document.getElementById(id);
+
+  function update(){
+    const kappa = parseFloat($('kappa').value);
+    const C = parseFloat($('barrier').value);
+    $('kappaV').textContent = kappa.toFixed(2);
+    $('barrierV').textContent = (C*100).toFixed(1) + '%';
+
+    const res = run(kappa, C);
+    draw(res, C);
+
+    $('rFinal').textContent   = res.final.toFixed(2) + '\u00D7';
+    $('rDD').textContent      = (res.maxdd*100).toFixed(1) + '%';
+    $('rU').textContent       = (res.meanU*100).toFixed(0) + '%';
+    $('rFrozen').textContent  = res.frozen === 0 ? '0' : res.frozen.toLocaleString();
+
+    const v = $('verdict');
+    if(res.haltAt >= 0){
+      const yrsLeft = ((N - res.haltAt)/252).toFixed(1);
+      v.className = 'verdict dead';
+      v.innerHTML = '<b>Terminated.</b> Exposure reached zero and the strategy '
+        + 'was frozen for its final ' + yrsLeft + ' years. No re-entry rule can '
+        + 'recover it: drawdown cannot fall while the position is flat.';
+    } else {
+      v.className = 'verdict';
+      v.innerHTML = '<b>Survived.</b> Exposure never reached zero, so the '
+        + 'controller could always participate in a recovery.';
+    }
+
+    $('kappaHint').textContent = kappa < 0.9
+      ? 'Derisks early and steeply. On this data that is usually fatal.'
+      : (kappa > 1.8
+        ? 'Holds full size well into a drawdown, then cuts sharply.'
+        : 'Near the cushion-proportional rule of the classical result.');
+
+    $('barrierHint').textContent = C < 0.10
+      ? 'A tight limit relative to this strategy\u2019s volatility.'
+      : (C > 0.25
+        ? 'Loose enough that the controller rarely engages.'
+        : 'Comparable to the strategy\u2019s own volatility.');
+  }
+
+  ['kappa','barrier'].forEach(id =>
+    $(id).addEventListener('input', update));
+  let rt; window.addEventListener('resize', ()=>{
+    clearTimeout(rt); rt=setTimeout(update,120);
+  });
+
+  axis();
+  update();
+})();
+</script>
+</body>
+</html>
